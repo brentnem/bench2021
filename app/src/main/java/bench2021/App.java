@@ -4,6 +4,12 @@
 package bench2021;
 
 public class App {
+
+
+    public void calculateBalances() {
+
+    }
+
     public String getGreeting() {
         return "Hello World!";
     }
