@@ -3,18 +3,47 @@
  */
 package bench2021;
 
+import java.io.IOException;
+
+import com.google.gson.JsonSyntaxException;
+
+import bench2021.exceptions.ClientException;
+import bench2021.helpers.BodyParser;
+import bench2021.helpers.ClientWrapper;
+
 public class App {
 
-
+    /**
+     * Prints a sequence of daily balances
+     */
     public void calculateBalances() {
 
-    }
+        RunningBalance runningBalance = new RunningBalance();
 
-    public String getGreeting() {
-        return "Hello World!";
+        //Would use some kind of dependency injection in a real app.
+        Request request = new Request(new ClientWrapper(), new BodyParser());
+        PageSequence pageSequence = new PageSequence(request);
+
+        try {
+            do {
+                pageSequence.next().getTransactions()
+                        .forEach(transaction -> runningBalance.incrementDailyBalance(transaction));
+            } while (pageSequence.hasPagesRemaining());
+        } catch (ClientException e) {
+            // Exceptions should be caught, logged, and a sanitized response returned to the
+            // end user.
+            System.out.println("Unexpected response from http client: " + e.getMessage());
+        } catch (IOException | InterruptedException e) {
+            System.out.println("Error with client connection: " + e.getMessage());
+        } catch (JsonSyntaxException e) {
+            System.out.println("Received malformed response from server: " + e.getMessage());
+        }
+
+        runningBalance.printBalances();
     }
 
     public static void main(String[] args) {
-        System.out.println(new App().getGreeting());
+        App app = new App();
+        app.calculateBalances();
     }
 }
